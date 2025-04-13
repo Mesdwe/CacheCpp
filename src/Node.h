@@ -5,18 +5,19 @@ namespace CacheCpp{
 	class Node
 	{
 	public:
-		Node(const Key& key, const Value& value)
-			:m_key(key), m_value(value), m_accessCount(1),
+		Node(const Key key, const Value value)
+			:m_key(std::move(key)), m_value(std::move(value)), m_accessCount(1),
 			m_prev(nullptr), m_next(nullptr)
 		{
 		}
 		~Node() = default;
 
 		void SetValue(const Value& value) { m_value = value; }
-		const Key GetKey() const { return m_key; }
-		const Value GetValue() const { return m_value; }
+		const Key& GetKey() const { return m_key; }
+		const Value& GetValue() const { return m_value; }
 		const size_t GetAccessCount() const { return m_accessCount; }
 		void IncrementAccessCount() { m_accessCount++; }
+		void SetAccessCount(size_t value) { m_accessCount = value; }
 
 		void SetPrev(std::shared_ptr<Node<Key, Value>>prev) { m_prev = prev; }
 		void SetNext(std::shared_ptr<Node<Key, Value>>next) { m_next = next; }
@@ -32,8 +33,63 @@ namespace CacheCpp{
 	};
 
 	template<typename Key, typename Value>
-	struct CacheTraits
+	class LinkedList
 	{
+	public:
+		using NodeType = Node<Key, Value>;
+		using NodePtr = std::shared_ptr<NodeType>;
 
+		explicit LinkedList()
+		{
+			_InitialiseList();
+		}
+
+		// If head's next is tail, the list is empty.
+		// This logic assumes dummy head and tail nodes are always present.
+		bool IsEmpty() const
+		{
+			return m_head->GetNext() == m_tail;
+		}
+
+		void InsertNode(const NodePtr& node)
+		{
+			// Insert at the beginning of the list
+			node->SetPrev(m_head);
+			node->SetNext(m_head->GetNext());
+			node->GetNext()->SetPrev(node);
+			m_head->SetNext(node);
+		}
+
+		void RemoveNode(const NodePtr& node)
+		{
+			if (!node || node == m_head || node == m_tail)
+				return;
+
+			if (node->GetPrev())
+				node->GetPrev()->SetNext(node->GetNext());
+			if (node->GetNext())
+				node->GetNext()->SetPrev(node->GetPrev());
+
+			node->SetPrev(nullptr);
+			node->SetNext(nullptr);
+		}
+
+		NodePtr GetLastNode() const// get node to evict
+		{
+			if (IsEmpty()) return nullptr;
+			return m_tail->GetPrev();
+		}
+	private:
+		void _InitialiseList()
+		{
+			m_head = std::make_shared<NodeType>(Key(), Value());
+			m_tail = std::make_shared<NodeType>(Key(), Value());
+			m_head->SetNext(m_tail);
+			m_tail->SetPrev(m_head);
+		}
+
+	private:
+		NodePtr m_head;
+		NodePtr m_tail;
 	};
 }

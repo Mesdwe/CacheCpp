@@ -13,9 +13,8 @@ namespace CacheCpp {
 	class LRUCache : public ICachePolicy<Key, Value>
 	{
 	public:
-		LRUCache(int capacity) : m_capacity(capacity)
+		LRUCache(int capacity) : m_capacity(capacity), m_list(std::make_unique<LinkedList<Key,Value>>())
 		{
-			_InitialiseList();
 		}
 
 		virtual ~LRUCache() override = default;
@@ -56,7 +55,7 @@ namespace CacheCpp {
 			auto it = m_caches.find(key);
 			if (it != m_caches.end())
 			{
-				_RemoveNode(it->second);
+				m_list->RemoveNode(it->second);
 				m_caches.erase(it);
 			}
 		}
@@ -66,50 +65,28 @@ namespace CacheCpp {
 		virtual size_t Capacity() const override { return m_capacity; }
 
 	private:
-		void _InitialiseList()
-		{
-			m_head = std::make_shared<NodeType>(Key(), Value());
-			m_tail = std::make_shared<NodeType>(Key(), Value());
-			m_head->SetNext(m_tail);
-			m_tail->SetPrev(m_head);
-		}
-
 		void _AddNewNode(const Key& key, const Value& value)
 		{
 			if (m_caches.size() >= m_capacity)
 				_EvictNode();
 			NodePtr new_node = std::make_shared<NodeType>(key, value);
-			_InsertNode(new_node);
+			m_list->InsertNode(new_node);
 			m_caches[key] = new_node;
 		}
 
 		void _MoveToMostRecent(const NodePtr& node)
 		{
-			_RemoveNode(node);
-			_InsertNode(node);
+			m_list->RemoveNode(node);
+			m_list->InsertNode(node);
 		}
 
-		void _RemoveNode(const NodePtr& node)
-		{
-			if (node->GetPrev())
-			node->GetPrev()->SetNext(node->GetNext());
-			if (node->GetNext())
-				node->GetNext()->SetPrev(node->GetPrev());
-		}
-
-		void _InsertNode(const NodePtr& node)
-		{
-			// Insert at the beginning of the list - most recently used
-			node->SetPrev(m_head);
-			node->SetNext(m_head->GetNext());
-			node->GetNext()->SetPrev(node);
-			m_head->SetNext(node);
-		}
 
 		void _EvictNode()
 		{
-			NodePtr least_recent = m_tail->GetPrev();
-			_RemoveNode(least_recent);
+			NodePtr least_recent = m_list->GetLastNode();
+			if (!least_recent) return;
+
+			m_list->RemoveNode(least_recent);
 			m_caches.erase(least_recent->GetKey());
 		}
 
@@ -117,9 +94,7 @@ namespace CacheCpp {
 		int m_capacity;
 		NodeMap m_caches;    // value: Node<Key,Value>
 		std::mutex m_mutex;
-		// dummy head and tail. m_head->GetNext() is the most recently used node
-		NodePtr m_head;
-		NodePtr m_tail;
+		std::unique_ptr<CacheCpp::LinkedList<Key, Value>> m_list;   // m_list->GetLastNode() is the node to evict
 	};
 
 	// optimisation: LRU-K
