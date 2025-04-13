@@ -1,0 +1,11 @@
+# CMake generated folders
+/out
+bin/
+build/
+
+# IDE related
+/.vs
+.idea/
+
+
+CMakeSettings.json
