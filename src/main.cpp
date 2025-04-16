@@ -62,7 +62,7 @@ namespace Test {
 
 
 		RunSingleTest("LFU",
-			std::make_unique<CacheCpp::LFUCache<int, std::string>>(capacity),
+			std::make_unique<CacheCpp::LFUCache<int, std::string>>(capacity, 900000),
 			capacity, operations, pattern);
 	}
 

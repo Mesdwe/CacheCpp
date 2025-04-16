@@ -11,22 +11,21 @@
 
 namespace CacheCpp {
 
+	//template<typename Key, typename Value>
+	//class FrequencyList
+	//{
+	//public:
+	//	explicit FrequencyList(int freq)
+	//		: m_freq(freq), m_list(std::make_unique<LinkedList<Key, Value>>())
+	//	{
+	//	}
 
-	template<typename Key, typename Value>
-	class FrequencyList
-	{
-	public:
-		explicit FrequencyList(int freq)
-			: m_freq(freq), m_list(std::make_unique<LinkedList<Key, Value>>())
-		{
-		}
+	//	const std::unique_ptr<CacheCpp::LinkedList<Key, Value>>& GetList() const { return m_list; }
 
-		const std::unique_ptr<CacheCpp::LinkedList<Key, Value>>& GetList() const { return m_list; }
-
-	private:
-		int m_freq;   // access frequency
-		std::unique_ptr<CacheCpp::LinkedList<Key, Value>> m_list;
-	};
+	//private:
+	//	int m_freq;   // access frequency
+	//	std::unique_ptr<CacheCpp::LinkedList<Key, Value>> m_list;
+	//};
 
 
 	template<typename Key, typename Value>
