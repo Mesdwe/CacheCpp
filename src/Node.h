@@ -7,7 +7,7 @@ namespace CacheCpp{
 	public:
 		Node(const Key key, const Value value)
 			:m_key(std::move(key)), m_value(std::move(value)), m_accessCount(1),
-			m_prev(nullptr), m_next(nullptr)
+			m_next(nullptr)
 		{
 		}
 		~Node() = default;
@@ -21,14 +21,14 @@ namespace CacheCpp{
 
 		void SetPrev(std::shared_ptr<Node<Key, Value>>prev) { m_prev = prev; }
 		void SetNext(std::shared_ptr<Node<Key, Value>>next) { m_next = next; }
-		const std::shared_ptr<Node<Key, Value>> GetPrev() const { return m_prev; }
+		const std::shared_ptr<Node<Key, Value>> GetPrev() const { return m_prev.lock(); }
 		const std::shared_ptr<Node<Key, Value>> GetNext() const { return m_next; }
 
 	private:
 		Key m_key;
 		Value m_value;
 		size_t m_accessCount;
-		std::shared_ptr<Node<Key, Value>> m_prev;
+		std::weak_ptr<Node<Key, Value>> m_prev;
 		std::shared_ptr<Node<Key, Value>> m_next;
 	};
 
@@ -65,10 +65,13 @@ namespace CacheCpp{
 			if (!node || node == m_head || node == m_tail)
 				return;
 
-			if (node->GetPrev())
-				node->GetPrev()->SetNext(node->GetNext());
-			if (node->GetNext())
-				node->GetNext()->SetPrev(node->GetPrev());
+			auto prev = node->GetPrev();
+			auto next = node->GetNext();
+			if (prev && next) 
+			{
+				prev->SetNext(next);
+				next->SetPrev(prev);
+			}
 
 			node->SetPrev(nullptr);
 			node->SetNext(nullptr);
