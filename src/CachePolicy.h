@@ -21,15 +21,9 @@ public:
 
     virtual void Remove(const Key& key) = 0;
 
-    //virtual void Clear() = 0;
-
     virtual size_t Size() const = 0;
 
     virtual size_t Capacity() const = 0;
-
-private:
-    // _EvictNode()
-    // 
 };
 
 }

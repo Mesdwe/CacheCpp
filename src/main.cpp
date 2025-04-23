@@ -64,6 +64,10 @@ namespace Test {
 		RunSingleTest("LFU",
 			std::make_unique<CacheCpp::LFUCache<int, std::string>>(capacity, 900000),
 			capacity, operations, pattern);
+
+		RunSingleTest("ARC",
+			std::make_unique<CacheCpp::ARCCache<int, std::string>>(capacity, 50),
+			capacity, operations, pattern);
 	}
 
 	void CacheTestRunner::RunSingleTest(const std::string& name,

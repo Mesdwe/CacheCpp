@@ -77,9 +77,9 @@ namespace CacheCpp {
 			auto it = m_caches.find(key);
 			if (it != m_caches.end())
 			{
+				_UpdateFreqStats(false, it->second->GetAccessCount());
 				_RemoveFromFreqList(it->second);
 				m_caches.erase(it->second->GetKey());
-				_UpdateFreqStats(false, it->second->GetAccessCount());
 			}
 		}
 
@@ -94,6 +94,32 @@ namespace CacheCpp {
 
 		virtual size_t Capacity() const override { return m_capacity; }
 
+		void IncreaseCapacity() { m_capacity++; }
+		void DecreaseCapacity() 
+		{
+			if (m_capacity <= 0) return;
+			if (m_caches.size() >= m_capacity) {
+				_EvictNode();
+			}
+			--m_capacity;
+		}
+
+		bool Contains(const Key& key)
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			return m_caches.find(key) != m_caches.end();
+		}
+
+		NodePtr GetNodeToEvict()
+		{
+			if (m_freqLists.find(m_minFreq) == m_freqLists.end()) return nullptr;
+			auto& list = m_freqLists[m_minFreq];
+			if (!list || list->IsEmpty()) return nullptr;
+
+			NodePtr node = list->GetLastNode();
+				
+			return node;
+		}
 	private:
 		void _AddNewNode(const Key& key, const Value& value)
 		{

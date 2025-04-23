@@ -64,6 +64,39 @@ namespace CacheCpp {
 
 		virtual size_t Capacity() const override { return m_capacity; }
 
+
+		void IncreaseCapacity() { m_capacity++; }
+		void DecreaseCapacity()
+		{
+			if (m_capacity <= 0) return;
+			if (m_caches.size() >= m_capacity) {
+				_EvictNode();
+			}
+			--m_capacity;
+		}
+
+		bool Contains(const Key& key)
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			return m_caches.find(key) != m_caches.end();
+		}
+
+		NodePtr Find(const Key& key)
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			auto it = m_caches.find(key);
+			if (it != m_caches.end()) {
+				return it->second;
+			}
+			return nullptr;
+		}
+
+		NodePtr GetNodeToEvict()
+		{
+			NodePtr least_recent = m_list->GetLastNode();
+			return least_recent;
+		}
+
 	private:
 		void _AddNewNode(const Key& key, const Value& value)
 		{
@@ -118,7 +151,6 @@ namespace CacheCpp {
 				m_accessHistory->Remove(key);
 				LRUCache<Key, Value>::Put(key, value);
 			}
-
 		}
 
 		bool Get(const Key& key, Value& value) override
